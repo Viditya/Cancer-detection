@@ -1,3 +1,4 @@
+import sqlite3
 import numpy as np
 import sys
 import os
@@ -7,8 +8,9 @@ import re
 from keras.applications.imagenet_utils import preprocess_input, decode_predictions
 from keras.models import load_model
 from keras.preprocessing import image
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for, flash, redirect
 from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 model_path = 'vgg19.h5'
@@ -39,6 +41,9 @@ def model_predict(img_path, model):
 
 @app.route('/', methods = ['GET'])
 def index():
+    conn = get_db_connection()
+    track = conn.execute('SELECT * FROM tracker').fetchall()
+    conn.close()
     return render_template('index.html')
 
 @app.route('/predict', methods = ['GET','POST'])
@@ -57,3 +62,22 @@ def upload():
         print(result)        
         return result
     return None
+
+
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.route('/create', methods=('GET', 'POST'))
+def create():
+    ip = ''
+    search_text = ''
+    conn = get_db_connection()
+    conn.execute('INSERT INTO tracker (ip, search_text) VALUES (?, ?)',
+                    (ip , search_text))
+    conn.commit()
+    conn.close()
+
+    return render_template('create.html')
