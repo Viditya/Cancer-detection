@@ -1,24 +1,24 @@
-import sqlite3
-import numpy as np
-import sys
-import os
 import glob
-import re
-from flask_cors import CORS
 
-from keras.applications.imagenet_utils import preprocess_input, decode_predictions
+# from baseModel import get_classes
+import itertools
+import os
+import sqlite3
+
+import numpy as np
+from flask import Flask, flash, redirect, render_template, request, url_for
+from flask_cors import CORS
+from keras.applications.imagenet_utils import decode_predictions, preprocess_input
+
 # decode_predictions
 from keras.models import load_model
 from keras.preprocessing import image
-from flask import Flask, render_template, request, url_for, flash, redirect
 from werkzeug.utils import secure_filename
-# from baseModel import get_classes
-import itertools
 
 # print(get_classes)
 app = Flask(__name__)
 CORS(app)
-model_path = 'skin_cancer_detection.h5'
+model_path = "skin_cancer_detection.h5"
 
 ## Loading the model
 model = load_model(model_path, compile=False)
@@ -26,17 +26,18 @@ model.make_predict_function()
 
 
 ## Decode predictions
-file_name = 'classes.txt'
+file_name = "classes.txt"
+
 
 def get_classes():
     classes = []
-    with open(file_name, 'r', encoding='utf-8') as my_file:
+    with open(file_name, "r", encoding="utf-8") as my_file:
         classes.append(my_file.readlines())
     # print(classes, 'Inside get_classes')
     return classes
-        
 
-def decode_predictions(preds, top = 1):
+
+def decode_predictions(preds, top=1):
     if len(preds.shape) != 2 or preds.shape[1] != 9:
         raise ValueError(
             "`decode_predictions` expects "
@@ -51,17 +52,15 @@ def decode_predictions(preds, top = 1):
 
     results = {}
     for _class, _pred in zip(classes, preds):
-
         results[_class] = _pred
 
-    sorted_list = sorted(results.items(),reverse = True, key = lambda x:x[1])
+    sorted_list = sorted(results.items(), reverse=True, key=lambda x: x[1])
     results.clear()
     for key, value in sorted_list:
-        results[key] = value    
+        results[key] = value
 
     result = dict(itertools.islice(results.items(), top))
     return result
-
 
 
 ## Preprocessing function
@@ -83,59 +82,62 @@ def model_predict(img_path, model):
 # def hello():
 #     return 'Hello, World!'
 
-@app.route('/', methods = ['GET'])
+
+@app.route("/", methods=["GET"])
 def index():
     conn = get_db_connection()
-    track = conn.execute('SELECT * FROM tracker').fetchall()
+    track = conn.execute("SELECT * FROM tracker").fetchall()
     conn.close()
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/predict', methods = ['GET','POST'])
+
+@app.route("/predict", methods=["GET", "POST"])
 def upload():
-    if request.method == 'POST':
-        #Get the file from the POST
-        f = request.files['file']
+    if request.method == "POST":
+        # Get the file from the POST
+        f = request.files["file"]
         basepath = os.path.dirname(__file__)
-        file_path = os.path.join(
-            basepath, 'uploads', secure_filename(f.filename))
+        file_path = os.path.join(basepath, "uploads", secure_filename(f.filename))
         f.save(file_path)
         ### Make the predictions
         pred = model_predict(file_path, model)
         pred_class = decode_predictions(pred, top=3)
-        print('***************')
+        print("***************")
         print(pred_class)
-        print('***************')
+        print("***************")
         li = []
-        for label,percentage in pred_class.items():
-            # print(label, ' label')   
+        for label, percentage in pred_class.items():
+            # print(label, ' label')
             # print(percentage, ' percentage')
             li.append(f'{label.replace("n","").upper()} {percentage*100:.2f}')
         # print(li)
         # print(pred[0])
         # result = str('This is a '+ pred_class[0][0][1] + ' with probability ' + str(round(100*pred_class[0][0][2])) + '%')
-        print(li)        
+        print(li)
         return {"data": li}
     return None
 
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 
-@app.route('/create', methods=('GET', 'POST'))
+@app.route("/create", methods=("GET", "POST"))
 def create():
-    ip = ''
-    search_text = ''
+    ip = ""
+    search_text = ""
     conn = get_db_connection()
-    conn.execute('INSERT INTO tracker (ip, search_text) VALUES (?, ?)',
-                    (ip , search_text))
+    conn.execute(
+        "INSERT INTO tracker (ip, search_text) VALUES (?, ?)", (ip, search_text)
+    )
     conn.commit()
     conn.close()
 
-    return render_template('create.html')
+    return render_template("create.html")
+
 
 if __name__ == "__main__":
- # dev   app.run(debug=True, port =3001)
-    app.run(port=3001)
+    # dev   app.run(debug=True, port =3001)
+    app.run()
