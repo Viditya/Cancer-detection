@@ -3,3 +3,8 @@
 *.zip
 CNN_assignment/
 .ipynb_checkpoints/
+*.sql
+init_db.py
+*.ipynb
+*.db
+__pycache__
