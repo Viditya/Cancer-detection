@@ -4,25 +4,60 @@ import sys
 import os
 import glob
 import re
+from flask_cors import CORS
 
 from keras.applications.imagenet_utils import preprocess_input, decode_predictions
+# decode_predictions
 from keras.models import load_model
 from keras.preprocessing import image
 from flask import Flask, render_template, request, url_for, flash, redirect
 from werkzeug.utils import secure_filename
+from baseModel import get_classes
+import itertools
 
-
+# print(get_classes)
 app = Flask(__name__)
-model_path = 'vgg19.h5'
+CORS(app)
+model_path = 'skin_cancer_detection.h5'
 
 ## Loading the model
 model = load_model(model_path, compile=False)
 model.make_predict_function()
 
 
+## Decode predictions
+
+def decode_predictions(preds, top = 1):
+    if len(preds.shape) != 2 or preds.shape[1] != 9:
+        raise ValueError(
+            "`decode_predictions` expects "
+            "a batch of predictions "
+            "(i.e. a 2D array of shape (samples, 9)). "
+            "Found array with shape: " + str(preds.shape)
+        )
+    classes = get_classes()[0]
+    preds = preds[0]
+
+    # return classes
+
+    results = {}
+    for _class, _pred in zip(classes, preds):
+
+        results[_class] = _pred
+
+    sorted_list = sorted(results.items(),reverse = True, key = lambda x:x[1])
+    results.clear()
+    for key, value in sorted_list:
+        results[key] = value    
+
+    result = dict(itertools.islice(results.items(), top))
+    return result
+
+
+
 ## Preprocessing function
 def model_predict(img_path, model):
-    img = image.load_img(img_path, target_size=(224, 224))
+    img = image.load_img(img_path, target_size=(180, 180))
 
     # Preprocessing the image
     x = image.img_to_array(img)
@@ -57,10 +92,20 @@ def upload():
         f.save(file_path)
         ### Make the predictions
         pred = model_predict(file_path, model)
-        pred_class = decode_predictions(pred, top=1)
-        result = str('This is a '+ pred_class[0][0][1] + ' with probability ' + str(round(100*pred_class[0][0][2])) + '%')
-        print(result)        
-        return result
+        pred_class = decode_predictions(pred, top=3)
+        print('***************')
+        print(pred_class)
+        print('***************')
+        li = []
+        for label,percentage in pred_class.items():
+            # print(label, ' label')   
+            # print(percentage, ' percentage')
+            li.append(f'{label.upper()} {percentage*100:.2f}')
+        # print(li)
+        # print(pred[0])
+        # result = str('This is a '+ pred_class[0][0][1] + ' with probability ' + str(round(100*pred_class[0][0][2])) + '%')
+        print(li)        
+        return {"data": li}
     return None
 
 
@@ -81,3 +126,6 @@ def create():
     conn.close()
 
     return render_template('create.html')
+
+if __name__ == "__main__":
+    app.run(debug=True, port =3001)

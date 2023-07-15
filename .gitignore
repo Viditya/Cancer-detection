@@ -1,2 +1,5 @@
 *.h5
 *.pyc
+*.zip
+CNN_assignment/
+.ipynb_checkpoints/
