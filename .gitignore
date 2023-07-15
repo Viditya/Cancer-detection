@@ -7,4 +7,5 @@ CNN_assignment/
 init_db.py
 *.ipynb
 *.db
+static/
 __pycache__

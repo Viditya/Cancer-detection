@@ -4,13 +4,13 @@ from datetime import date
 date_today = date.today().strftime("%Y%m%d")
 
 url = 'https://drive.google.com/uc?id=1xLfSQUGDl8ezNNbUkpuHOYvSpTyxVhCs'
-# gdown.download(url, output, quiet=False)
+# gdown.download(url , quiet=False)
 
 output = 'CNN_assignment.zip'
 
-file_dir = '/home/ubuntu/fun/lens/' + output
+file_dir = '/home/ubuntu/fun/lens/backend/' + output
 
-out_dir =  '/home/ubuntu/fun/lens/CNN_assignment'
+out_dir =  '/home/ubuntu/fun/lens/backend/CNN_assignment'
 
 print(file_dir)
 print(out_dir)

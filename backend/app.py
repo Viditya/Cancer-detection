@@ -12,7 +12,7 @@ from keras.models import load_model
 from keras.preprocessing import image
 from flask import Flask, render_template, request, url_for, flash, redirect
 from werkzeug.utils import secure_filename
-from baseModel import get_classes
+# from baseModel import get_classes
 import itertools
 
 # print(get_classes)
@@ -26,6 +26,15 @@ model.make_predict_function()
 
 
 ## Decode predictions
+file_name = 'classes.txt'
+
+def get_classes():
+    classes = []
+    with open(file_name, 'r', encoding='utf-8') as my_file:
+        classes.append(my_file.readlines())
+    # print(classes, 'Inside get_classes')
+    return classes
+        
 
 def decode_predictions(preds, top = 1):
     if len(preds.shape) != 2 or preds.shape[1] != 9:
@@ -100,7 +109,7 @@ def upload():
         for label,percentage in pred_class.items():
             # print(label, ' label')   
             # print(percentage, ' percentage')
-            li.append(f'{label.upper()} {percentage*100:.2f}')
+            li.append(f'{label.replace("n","").upper()} {percentage*100:.2f}')
         # print(li)
         # print(pred[0])
         # result = str('This is a '+ pred_class[0][0][1] + ' with probability ' + str(round(100*pred_class[0][0][2])) + '%')
@@ -129,4 +138,4 @@ def create():
 
 if __name__ == "__main__":
  # dev   app.run(debug=True, port =3001)
-    app.run(port =3001)
+    app.run(port=3001)

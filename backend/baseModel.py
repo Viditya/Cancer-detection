@@ -10,7 +10,7 @@ import tensorflow as tf
 from keras import layers
 from keras.models import Sequential
 
-file_dir = '/home/ubuntu/fun/lens/CNN_assignment'
+file_dir = '/home/ubuntu/fun/lens/backend/CNN_assignment'
 
 batch_size = 32
 img_height = 180
@@ -45,11 +45,14 @@ def get_classes():
   # print(class_names)
   num_classes = len(class_names)
   
-  file = open("classes.txt","w")
-  file.writelines(class_names)
-  file.close()
+  file_name = 'classes.txt'
 
+  with open(file_name, 'w', encoding='utf-8') as my_file:
+    for class_name in class_names:
+      my_file.writelines(class_name + '\n')
+  
   return class_names, num_classes
+  # file.close()
 
 
 
