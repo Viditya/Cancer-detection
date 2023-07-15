@@ -32,7 +32,7 @@
         const dataArray = new FormData();
         dataArray.append("file", image);
 
-        fetch("http://" + location.hostname + ":3001", {
+        fetch("http://" + location.hostname + ":3001/predict", {
             method: "POST",
             body: dataArray,
         })
